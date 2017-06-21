@@ -2,3 +2,9 @@
 Gemfile.lock
 .bundle
 vendor
+.gradle/
+.idea/
+build/
+logstash-input-tcp.iml
+logstash-input-tcp.ipr
+logstash-input-tcp.iws
