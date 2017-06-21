@@ -206,7 +206,6 @@ class LogStash::Inputs::Tcp < LogStash::Inputs::Base
       tbuf = read(socket)
       if @proxy_protocol && first_read
         first_read = false
-        orig_buf = tbuf
         pp_hdr, tbuf = tbuf.split("\r\n", 2)
 
         pp_info = pp_hdr.split(/\s/)
@@ -256,20 +255,6 @@ class LogStash::Inputs::Tcp < LogStash::Inputs::Base
 
       decorate(event)
       output_queue << event
-    end
-  end
-
-  private
-  def client_thread(output_queue, socket)
-    Thread.new(output_queue, socket) do |q, s|
-      begin
-        @logger.debug? && @logger.debug("Accepted connection", :client => s.peer, :server => "#{@host}:#{@port}")
-        handle_socket(s, s.peeraddr[3], s.peeraddr[1], q, @codec.clone)
-      rescue Interrupted
-        s.close rescue nil
-      ensure
-        @client_threads_lock.synchronize{@client_threads.delete(Thread.current)}
-      end
     end
   end
 
