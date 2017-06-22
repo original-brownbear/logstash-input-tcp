@@ -203,7 +203,7 @@ class LogStash::Inputs::Tcp < LogStash::Inputs::Base
     peer = "#{client_address}:#{client_port}"
     first_read = true
     while !stop?
-      tbuf = read(socket)
+      tbuf = socket.sysread(16384)
       if @proxy_protocol && first_read
         first_read = false
         pp_hdr, tbuf = tbuf.split("\r\n", 2)
@@ -264,10 +264,6 @@ class LogStash::Inputs::Tcp < LogStash::Inputs::Base
   
   def server?
     @mode == "server"
-  end
-
-  def read(socket)
-    socket.sysread(16384)
   end
 
   def ssl_context
