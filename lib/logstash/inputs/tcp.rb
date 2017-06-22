@@ -181,7 +181,7 @@ class LogStash::Inputs::Tcp < LogStash::Inputs::Base
   def run_client(output_queue)
     while !stop?
       self.client_socket = new_client_socket
-      handle_socket(client_socket, output_queue, @codec.clone)
+      handle_socket(client_socket, output_queue)
     end
   ensure
     # catch all rescue nil on close to discard any close errors or invalid socket
@@ -192,18 +192,19 @@ class LogStash::Inputs::Tcp < LogStash::Inputs::Base
     Thread.new(output_queue, socket) do |q, s|
       begin
         @logger.debug? && @logger.debug("Accepted connection", :client => s.peer, :server => "#{@host}:#{@port}")
-        handle_socket(s, q, @codec.clone)
+        handle_socket(s, q)
       ensure
         delete_connection_socket(s)
       end
     end
   end
 
-  def handle_socket(socket, output_queue, codec)
+  def handle_socket(socket, output_queue)
     client_address = socket.peeraddr[3]
     client_port = socket.peeraddr[1]
     peer = "#{client_address}:#{client_port}"
     first_read = true
+    codec = @codec.clone
     while !stop?
       tbuf = socket.sysread(16384)
       if @proxy_protocol && first_read
