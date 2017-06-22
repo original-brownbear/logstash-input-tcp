@@ -238,12 +238,7 @@ class LogStash::Inputs::Tcp < LogStash::Inputs::Base
     socket.close rescue nil
 
     codec.respond_to?(:flush) && codec.flush do |event|
-      event.set(HOST_FIELD, client_address) unless event.get(HOST_FIELD)
-      event.set(PORT_FIELD, client_port) unless event.get(PORT_FIELD)
-      event.set(SSLSUBJECT_FIELD, socket.peer_cert.subject.to_s) if @ssl_enable && @ssl_verify && event.get(SSLSUBJECT_FIELD).nil?
-
-      decorate(event)
-      output_queue << event
+      enqueue_decorated(output_queue, event, socket, client_address, client_port)
     end
   end
 
@@ -255,13 +250,16 @@ class LogStash::Inputs::Tcp < LogStash::Inputs::Base
         event.set(PROXY_HOST_FIELD, proxy_address) unless event.get(PROXY_HOST_FIELD)
         event.set(PROXY_PORT_FIELD, proxy_port) unless event.get(PROXY_PORT_FIELD)
       end
-      event.set(HOST_FIELD, client_address) unless event.get(HOST_FIELD)
-      event.set(PORT_FIELD, client_port) unless event.get(PORT_FIELD)
-      event.set(SSLSUBJECT_FIELD, socket.peer_cert.subject.to_s) if @ssl_enable && @ssl_verify && event.get(SSLSUBJECT_FIELD).nil?
-
-      decorate(event)
-      output_queue << event
+      enqueue_decorated(output_queue, event, socket, client_address, client_port)
     end
+  end
+  
+  def enqueue_decorated(output_queue, event, socket, client_address, client_port)
+    event.set(HOST_FIELD, client_address) unless event.get(HOST_FIELD)
+    event.set(PORT_FIELD, client_port) unless event.get(PORT_FIELD)
+    event.set(SSLSUBJECT_FIELD, socket.peer_cert.subject.to_s) if @ssl_enable && @ssl_verify && event.get(SSLSUBJECT_FIELD).nil?
+    decorate(event)
+    output_queue << event
   end
   
   def server?
